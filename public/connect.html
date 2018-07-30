@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Connect WS</title>
+</head>
+<body>
+
+<p id="text" style="margin: 30px; padding: 10px;"></p>
+<input type="text" id="chat" placeholder="Message" style="margin: 30px; padding: 10px;" onsubmit="SendMessage()"><br>
+<button id="btn" onclick="SendMessage()">SEND</button>
+
+
+<script>
+
+    var text = document.getElementById("text");
+    var chat = document.getElementById("chat");
+
+    window.onload = function (ev) {
+        var url = "ws://" + window.location.host + "/api/ws/connect";
+        ws = new WebSocket(url);
+
+        var now = function () {
+            var iso = new Date().toISOString();
+            return iso.split("T")[1].split(".")[0];
+        };
+
+        ws.onopen = function (e) {
+            text.innerText += "New Connection " + now() + "\n"
+        };
+
+        ws.onmessage = function (msg) {
+            text.innerText += msg.data.text + " " + now() + "\n";
+
+            console.log(msg)
+        };
+
+        ws.onerror = function () {
+            text.innerText += "Error \n\n"
+        }
+    };
+
+    function SendMessage() {
+        if (chat.value !== "") {
+            text = chat.value;
+            text.innerText += text + "\n";
+            chat.value = "";
+
+            if (text == "sub") {
+                data = {"action" : "sub", "channel_name" : "channel1"}
+                ws.send(JSON.stringify(data))
+            }else if(text == "unsub") {
+                data = {"action" : "unsub", "channel_name" : "channel1"}
+                ws.send(JSON.stringify(data))
+            }else {
+                data = {"action" : "message", "channel_name" : "channel1", "text" : text};
+                ws.send(JSON.stringify(data))
+            }
+        }
+    }
+</script>
+</body>
+</html>
